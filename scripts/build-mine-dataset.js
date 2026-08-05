@@ -80,9 +80,16 @@ for (const [group, fields] of Object.entries(FIELD_MAP)) {
   }
 }
 
+// Some raw counters don't map 1:1 onto the official Fantasy scoring unit - apply a correction
+// factor to the raw value before the formula constant. Madstones: the raw "collected" count
+// undercounts the real scoring unit, which typically bundles ~2 from a neutral camp + ~3 from an
+// ancient camp + 1-2 handed over by teammates - averaging out to roughly x2.75 per raw pickup.
+const RAW_VALUE_CORRECTIONS = { madstones: 2.75 };
+
 function applyFormula(stat, rawValue) {
-  if (stat === "deaths") return DEATH_BASE - DEATH_SLOPE * rawValue;
-  return CONSTANTS[stat] * rawValue;
+  const corrected = rawValue * (RAW_VALUE_CORRECTIONS[stat] ?? 1);
+  if (stat === "deaths") return DEATH_BASE - DEATH_SLOPE * corrected;
+  return CONSTANTS[stat] * corrected;
 }
 
 function computeProbability(key, statKey) {

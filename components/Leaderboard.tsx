@@ -42,11 +42,14 @@ const text = {
 } as const;
 
 type LeaderboardProps = {
-  datasetKey: DatasetKey; onDatasetChange: (key: DatasetKey) => void;
   language: Language; onLanguageChange: (language: Language) => void;
 };
 
-export default function Leaderboard({ datasetKey, onDatasetChange, language, onLanguageChange }: LeaderboardProps) {
+export default function Leaderboard({ language, onLanguageChange }: LeaderboardProps) {
+  // Deliberately independent from the calculator's dataset toggle above: switching it here only
+  // re-renders the Leaderboard's own rows, so it can never shift page content the reader is
+  // scrolled past (unlike the shared toggle, which can grow/shrink several sections at once).
+  const [datasetKey, setDatasetKey] = useState<DatasetKey>("mine");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [stat, setStat] = useState<StatKey>("kills");
   const [pct, setPct] = useState<number>(100);
@@ -107,8 +110,8 @@ export default function Leaderboard({ datasetKey, onDatasetChange, language, onL
         </div>
         <div className="leaderboard-tools">
           <div className="language-switch" title={t.dataset}>
-            <button className={datasetKey === "mine" ? "active" : ""} onClick={() => onDatasetChange("mine")}>{datasets.mine.label[language]}</button>
-            <button className={datasetKey === "legacy" ? "active" : ""} onClick={() => onDatasetChange("legacy")}>{datasets.legacy.label[language]}</button>
+            <button className={datasetKey === "mine" ? "active" : ""} onClick={() => setDatasetKey("mine")}>{datasets.mine.label[language]}</button>
+            <button className={datasetKey === "legacy" ? "active" : ""} onClick={() => setDatasetKey("legacy")}>{datasets.legacy.label[language]}</button>
           </div>
           <div className="language-switch">
             <button className={language === "en" ? "active" : ""} onClick={() => onLanguageChange("en")}>EN</button>

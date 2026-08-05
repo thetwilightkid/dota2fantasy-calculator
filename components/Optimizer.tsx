@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Player, PlayerMember, roleStats, Role, StatKey } from "../data/players";
 import {
   bannerSlotColors,
@@ -110,13 +110,13 @@ const formulas: Record<StatKey, { en: string; ru: string }> = {
 };
 
 const methodology = {
-  en:["Each game is scored separately.","The source collection methodology sums the two highest-scoring games in a series.","Use the ×1/×2 toggle above the results to project a single game or a two-game match.","Death score is not clamped at zero and can become negative.","Lotus data is approximate because OpenDota does not expose the exact pickup event.","Prefix expected value equals projected player score × historical trigger rate × Prefix bonus.","Prefix and Suffix bonuses both apply to the roster and stack together — e.g. a player's score can receive both a Prefix bonus (like Crimson) and a Suffix bonus (like Lucky) at once.","Some Suffixes are extremely difficult to detect and count reliably from available data; where that's the case they're marked as not computed rather than estimated.","Trait effects are applied multiplicatively to the tier-adjusted emblem contribution."],
-  ru:["Каждая игра оценивается отдельно.","Методика сбора исходных данных суммирует две лучшие игры серии.","Используйте переключатель ×1/×2 над результатами, чтобы посчитать одну игру или матч из двух игр.","Очки за смерти не ограничиваются нулём и могут стать отрицательными.","Данные по лотосам приблизительные: OpenDota не отдаёт точное событие подбора.","Ожидаемый вклад префикса: прогноз игрока × историческая частота × бонус префикса.","Бонусы префикса и суффикса применяются к составу одновременно и складываются — например, за счёт игрока можно получить и бонус префикса (например, Багровый), и бонус суффикса (например, Везунчик) сразу.","Некоторые суффиксы крайне сложно надёжно обнаружить и посчитать по доступным данным; в этом случае они помечены как не рассчитанные, а не оценены приблизительно.","Эффекты свойств применяются мультипликативно к вкладу эмблемы после учёта разряда."]
+  en:["Each game is scored separately.","The source collection methodology sums the two highest-scoring games in a series.","Use the ×1/×2 toggle above the results to project a single game or a two-game match.","Death score is not clamped at zero and can become negative.","Lotus data is approximate because OpenDota does not expose the exact pickup event.","Prefix expected value equals projected player score × historical trigger rate × Prefix bonus.","Prefix and Suffix bonuses both apply to the roster and stack together — e.g. a player's score can receive both a Prefix bonus (like Crimson) and a Suffix bonus (like Lucky) at once.","Some Suffixes are extremely difficult to detect and count reliably from available data; where that's the case they're marked as not computed rather than estimated.","Trait bonuses/penalties add directly onto the tier bonus — e.g. Tier IV (+100%) next to a Vampiric emblem becomes 100+100-10 = 190%, not a further multiplication."],
+  ru:["Каждая игра оценивается отдельно.","Методика сбора исходных данных суммирует две лучшие игры серии.","Используйте переключатель ×1/×2 над результатами, чтобы посчитать одну игру или матч из двух игр.","Очки за смерти не ограничиваются нулём и могут стать отрицательными.","Данные по лотосам приблизительные: OpenDota не отдаёт точное событие подбора.","Ожидаемый вклад префикса: прогноз игрока × историческая частота × бонус префикса.","Бонусы префикса и суффикса применяются к составу одновременно и складываются — например, за счёт игрока можно получить и бонус префикса (например, Багровый), и бонус суффикса (например, Везунчик) сразу.","Некоторые суффиксы крайне сложно надёжно обнаружить и посчитать по доступным данным; в этом случае они помечены как не рассчитанные, а не оценены приблизительно.","Бонусы и штрафы свойств прибавляются напрямую к проценту разряда — например, Разряд IV (+100%) рядом с Вампирским свойством даёт 100+100-10 = 190%, а не дополнительное умножение."]
 };
 
 const mineMethodologyExtra = {
-  en:["My Dataset values are computed as (per-game average stat × the official Fantasy formula constant); Core/Support pairs average their two members rather than summing them, matching how the Fantasy system itself combines a pair.","Prefix bonus for My Dataset uses each player's own shrinkage-adjusted title probability (e.g. one member of a pair might favor Cerulean heroes while the other doesn't); the pair's two probabilities are averaged, then applied to the pair's combined score.","Suffix probabilities in My Dataset are computed directly from team-wide summary rates for five categories (Tormented, Flayed Twins, Patient, Decisive, Lucky); the remaining three (Underdog, Clutch, Cruel) have no basis in the collected data and use only the flat base bonus if picked manually.","Lotus and other rare-event figures in My Dataset come from directly collected per-game counts, more accurate than the community dataset's OpenDota-based approximation."],
-  ru:["Значения My Dataset считаются как (среднее значение статы за игру × официальный коэффициент формулы Fantasy); пары Core/Support усредняют показатели двух игроков, а не суммируют их — так же, как сама система Fantasy объединяет пару.","Бонус префикса в My Dataset использует собственную вероятность титула каждого игрока (с поправкой на усадку) — например, один игрок пары может чаще играть на героях Cerulean, а другой нет; вероятности пары усредняются, а затем применяются к общему счёту пары.","Вероятности суффиксов в My Dataset считаются напрямую по общекомандным показателям для пяти категорий (Мученик, Жрец Бескожих близнецов, Выжидатель, Удалец, Везунчик); оставшиеся три (Аутсайдер, Творец победы, Мучитель) не имеют основы в собранных данных и используют только базовый бонус при ручном выборе.","Данные по лотосам и другим редким событиям в My Dataset взяты из напрямую собранных счётчиков по каждой игре — точнее, чем приближение датасета сообщества через OpenDota."]
+  en:["My Dataset values are computed as (per-game average stat × the official Fantasy formula constant); Core/Support pairs average their two members rather than summing them, matching how the Fantasy system itself combines a pair.","Prefix bonus for My Dataset uses each player's own shrinkage-adjusted title probability (e.g. one member of a pair might favor Cerulean heroes while the other doesn't); the pair's two probabilities are averaged, then applied to the pair's combined score.","Suffix probabilities in My Dataset are computed directly from team-wide summary rates for five categories (Tormented, Flayed Twins, Patient, Decisive, Lucky); the remaining three (Underdog, Clutch, Cruel) have no basis in the collected data and use only the flat base bonus if picked manually.","Lotus and other rare-event figures in My Dataset come from directly collected per-game counts, more accurate than the community dataset's OpenDota-based approximation.","Madstones (≈) in My Dataset are collected as raw pickup counts, which understate the real scoring unit (a pickup typically bundles ~2 from a neutral camp + ~3 from an ancient camp + 1-2 handed over by teammates); a ×2.75 correction is applied so the value is comparable in scale, but it remains an approximation."],
+  ru:["Значения My Dataset считаются как (среднее значение статы за игру × официальный коэффициент формулы Fantasy); пары Core/Support усредняют показатели двух игроков, а не суммируют их — так же, как сама система Fantasy объединяет пару.","Бонус префикса в My Dataset использует собственную вероятность титула каждого игрока (с поправкой на усадку) — например, один игрок пары может чаще играть на героях Cerulean, а другой нет; вероятности пары усредняются, а затем применяются к общему счёту пары.","Вероятности суффиксов в My Dataset считаются напрямую по общекомандным показателям для пяти категорий (Мученик, Жрец Бескожих близнецов, Выжидатель, Удалец, Везунчик); оставшиеся три (Аутсайдер, Творец победы, Мучитель) не имеют основы в собранных данных и используют только базовый бонус при ручном выборе.","Данные по лотосам и другим редким событиям в My Dataset взяты из напрямую собранных счётчиков по каждой игре — точнее, чем приближение датасета сообщества через OpenDota.","Безумруды (≈) в My Dataset собираются как сырое число подборов, что занижает реальную единицу подсчёта очков (один подбор обычно объединяет ~2 с нейтрального лагеря + ~3 с лагеря древних + 1-2 переданных союзниками); применяется поправка ×2.75, чтобы значение было сопоставимо по масштабу, но оно остаётся приближённым."]
 };
 
 const traitLabels: Record<Trait,{en:string;ru:string}> = {
@@ -292,17 +292,34 @@ export default function Optimizer({datasetKey,onDatasetChange,language,onLanguag
     return out;
   },[scaledPlayers]);
 
-  const updateEmblem=(role:Role,index:number,patch:Partial<EmblemInput>)=>setBanners(c=>({...c,[role]:c[role].map((x,i)=>i===index?{...x,...patch}:x)}));
-  const resetBanners=()=>setBanners({core:defaults.core.map(x=>({...x})),mid:defaults.mid.map(x=>({...x})),support:defaults.support.map(x=>({...x}))});
-  // Simple mode is a clean slate - every emblem starts at 100 (pure base, no bonus) regardless
-  // of whatever Tier/Trait was set in advanced mode; leaving simple mode clears customPercent so
-  // Tier+Trait take back control of the score.
+  // Remembers each slot's last-typed Simple % even while Advanced mode is active (Advanced
+  // clears customPercent from the live banner state so Tier+Trait take over the score), so
+  // switching back to Simple restores what was there instead of resetting to 100.
+  const lastCustomPercentsRef=useRef<Record<Role,number[]>>({
+    core:defaults.core.map(x=>x.customPercent??100),
+    mid:defaults.mid.map(x=>x.customPercent??100),
+    support:defaults.support.map(x=>x.customPercent??100)
+  });
+  const updateEmblem=(role:Role,index:number,patch:Partial<EmblemInput>)=>{
+    if(patch.customPercent!==undefined) lastCustomPercentsRef.current[role][index]=patch.customPercent;
+    setBanners(c=>({...c,[role]:c[role].map((x,i)=>i===index?{...x,...patch}:x)}));
+  };
+  const resetBanners=()=>{
+    lastCustomPercentsRef.current={
+      core:defaults.core.map(x=>x.customPercent??100),
+      mid:defaults.mid.map(x=>x.customPercent??100),
+      support:defaults.support.map(x=>x.customPercent??100)
+    };
+    setBanners({core:defaults.core.map(x=>({...x})),mid:defaults.mid.map(x=>({...x})),support:defaults.support.map(x=>({...x}))});
+  };
+  // Leaving simple mode clears customPercent so Tier+Trait take back control of the score;
+  // entering it restores each slot's remembered Simple % instead of resetting to 100.
   const toggleSimpleMode=()=>setSimpleMode(current=>{
     const next=!current;
     setBanners(banners=>{
       const updated={} as BannerState;
       roles.forEach(role=>{
-        updated[role]=banners[role].map(emblem=>({...emblem,customPercent:next?100:undefined}));
+        updated[role]=banners[role].map((emblem,index)=>({...emblem,customPercent:next?lastCustomPercentsRef.current[role][index]:undefined}));
       });
       return updated;
     });

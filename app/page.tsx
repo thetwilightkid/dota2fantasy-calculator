@@ -22,7 +22,7 @@ export default function Home() {
 
   return (
     <Optimizer datasetKey={datasetKey} onDatasetChange={setDatasetKey} language={language} onLanguageChange={setLanguage}>
-      <Leaderboard datasetKey={datasetKey} onDatasetChange={setDatasetKey} language={language} onLanguageChange={setLanguage} />
+      <Leaderboard language={language} onLanguageChange={setLanguage} />
     </Optimizer>
   );
 }

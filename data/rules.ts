@@ -107,5 +107,5 @@ export const methodologyNotes = [
   "Death score is not clamped at zero and can become negative.",
   "Lotus data is approximate because OpenDota does not expose the exact pickup event.",
   "Two suffixes cannot be modeled reliably with OpenDota: pre-horn first blood and fountain kills.",
-  "Trait effects are applied multiplicatively to the tier-adjusted emblem contribution, following the official glossary wording."
+  "Trait bonuses/penalties add directly onto the tier bonus (base 100% + tier% + trait%), following the official glossary wording."
 ];

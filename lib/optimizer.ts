@@ -17,7 +17,7 @@ export type ScoreContribution = {
   trait: Trait;
   baseValue: number;
   tierBonus: number;
-  traitFactor: number;
+  traitDelta: number;
   factor: number;
   weightedValue: number;
 };
@@ -31,46 +31,48 @@ function normalizeTier(tier: Tier): Tier {
   return Object.prototype.hasOwnProperty.call(tierBonuses, key) ? key : "I";
 }
 
-export function getTraitFactors(emblems: EmblemInput[]): number[] {
-  const factors = emblems.map(() => 1);
+// Trait bonuses/penalties are percentage points added directly onto the tier bonus (base 100% +
+// tierBonus% + traitDelta%), not a further multiplication of the tier-adjusted total - e.g. Tier
+// IV (+100%) next to a Vampiric emblem lands on 100+100-10 = 190%, not 200%*0.9 = 180%.
+export function getTraitDeltas(emblems: EmblemInput[]): number[] {
+  const deltas = emblems.map(() => 0);
   const allTiersDifferent = new Set(emblems.map((item) => normalizeTier(item.tier))).size === emblems.length;
   const uniqueCount = emblems.filter((item) => item.trait === "unique").length;
   const friendlyCount = emblems.filter((item) => item.trait === "friendly").length;
 
   emblems.forEach((emblem, index) => {
-    if (emblem.trait === "fractal" && allTiersDifferent) factors[index] *= 1.6;
-    if (emblem.trait === "unique" && uniqueCount === 1) factors[index] *= 1.3;
-    if (emblem.trait === "friendly" && friendlyCount >= 3) factors[index] *= 1.5;
+    if (emblem.trait === "fractal" && allTiersDifferent) deltas[index] += 60;
+    if (emblem.trait === "unique" && uniqueCount === 1) deltas[index] += 30;
+    if (emblem.trait === "friendly" && friendlyCount >= 3) deltas[index] += 50;
 
     if (emblem.trait === "benevolent") {
       emblems.forEach((_, targetIndex) => {
-        if (isAdjacent(index, targetIndex)) factors[targetIndex] *= 1.2;
+        if (isAdjacent(index, targetIndex)) deltas[targetIndex] += 20;
       });
     }
 
     if (emblem.trait === "vampiric") {
-      factors[index] *= 1.5;
+      deltas[index] += 50;
       emblems.forEach((_, targetIndex) => {
-        if (isAdjacent(index, targetIndex)) factors[targetIndex] *= 0.9;
+        if (isAdjacent(index, targetIndex)) deltas[targetIndex] -= 10;
       });
     }
   });
 
-  return factors;
+  return deltas;
 }
 
 export function getScoreContributions(player: Player, emblems: EmblemInput[]): ScoreContribution[] {
-  const traitFactors = getTraitFactors(emblems);
+  const traitDeltas = getTraitDeltas(emblems);
 
   return emblems.map((emblem, index) => {
     const normalizedTier = normalizeTier(emblem.tier);
     const rawBaseValue = player.stats[emblem.stat];
     const baseValue = Number.isFinite(rawBaseValue) ? Number(rawBaseValue) : 0;
     const tierBonus = tierBonuses[normalizedTier];
-    const tierFactor = 1 + tierBonus / 100;
-    const traitFactor = Number.isFinite(traitFactors[index]) ? traitFactors[index] : 1;
+    const traitDelta = Number.isFinite(traitDeltas[index]) ? traitDeltas[index] : 0;
     const hasCustomPercent = Number.isFinite(emblem.customPercent);
-    const factor = hasCustomPercent ? (emblem.customPercent as number) / 100 : tierFactor * traitFactor;
+    const factor = hasCustomPercent ? (emblem.customPercent as number) / 100 : 1 + (tierBonus + traitDelta) / 100;
     const weightedValue = baseValue * factor;
 
     return {
@@ -79,7 +81,7 @@ export function getScoreContributions(player: Player, emblems: EmblemInput[]): S
       trait: emblem.trait,
       baseValue,
       tierBonus,
-      traitFactor,
+      traitDelta,
       factor,
       weightedValue: Number.isFinite(weightedValue) ? weightedValue : 0
     };
