@@ -1,0 +1,28 @@
+.topbar{display:block;padding:10px 14px}
+.topbar-row1{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;column-gap:20px;min-height:56px}
+.brand{gap:13px;white-space:nowrap;font-size:14px;letter-spacing:.1em;justify-self:start}
+.brand-mark{width:52px;height:52px;transform:none;border:0;background:url('/aegis.svg') center/contain no-repeat;color:transparent;font-size:0;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.topbar-row1 .dataset-switch{justify-self:center}
+.topbar-row1 .language-switch:not(.dataset-switch){justify-self:end}
+.anchor-nav{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 4px;margin-top:8px;padding-top:8px;border-top:1px solid rgba(226,188,98,.14);width:100%}
+.anchor-nav a{display:flex;align-items:center;justify-content:center;white-space:nowrap;line-height:1;font-size:14px;padding:12px 10px;color:#cdbf9c;transition:color .18s ease,text-shadow .18s ease}
+.anchor-nav a:hover{color:#f3d37f;text-shadow:0 0 16px rgba(226,188,98,.35)}
+@media(max-width:1360px){
+  .brand{font-size:12px;gap:10px}
+  .brand-mark{width:46px;height:46px}
+  .anchor-nav a{font-size:12px;padding:10px 8px}
+  .language-switch button{padding-inline:10px}
+}
+@media(max-width:1080px){
+  .topbar-row1{grid-template-columns:1fr auto;row-gap:8px}
+  .topbar-row1 .brand{grid-column:1}
+  .topbar-row1 .language-switch:not(.dataset-switch){grid-column:2;justify-self:end}
+  .topbar-row1 .dataset-switch{grid-column:1/-1;justify-self:center;order:3}
+  .brand{min-height:44px;font-size:13px}
+  .brand-mark{width:44px;height:44px}
+}
+@media(max-width:620px){
+  .anchor-nav a{padding:9px 6px;font-size:11px}
+  .brand>span:last-child{font-size:11px;letter-spacing:.08em}
+  .dataset-switch button,.language-switch:not(.dataset-switch) button{padding:6px 9px;font-size:12px}
+}

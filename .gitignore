@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+.env
+.env.local
+.env.production
+.vercel
+*.log
+.DS_Store
+
+# Raw personal dataset (large, and the generator output in data/mine/*.ts - which is what the
+# app actually runs on - is already committed as regular source). Re-run
+# scripts/build-mine-dataset.js against your own data3/ to regenerate it.
+data3/
+tsconfig.tsbuildinfo
